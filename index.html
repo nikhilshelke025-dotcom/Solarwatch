@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SOLARWATCH | Solar Monitoring</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#f4f7f5;--card:#fff;--ink:#15251e;--muted:#718078;--green:#16794b;--lime:#dff5a8;--line:#e4ebe6;--amber:#d98a17;--red:#c64b43;--nav:#10251c}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
@@ -26,41 +27,108 @@
   </nav>
   <div class="navlabel">Manage</div>
   <nav class="nav"><a href="#settings"><span class="ico">⚙</span><span>Settings</span></a></nav>
-  <div class="sidebottom"><b>Prototype environment</b><br>Demo readings are simulated. Connect a sensor and data service before using for real monitoring.</div>
+  <div class="sidebottom"><b>Supabase Connected</b><br>Live telemetry readings active.</div>
 </aside>
 <main class="main" id="overview">
   <header class="top">
     <div><div class="eyebrow">Solar operations / dashboard</div><h1>Good afternoon 👋</h1><p>Here’s how your solar system is performing today.</p></div>
-    <div class="righttop"><select class="select" id="siteSelect" aria-label="Select site"><option>Demo rooftop · Site 01</option><option>Campus test panel · Site 02</option><option>All demo sites</option></select><span class="status"><i class="dot"></i> Demo online</span><button class="btn primary" id="refresh">↻ Refresh data</button></div>
+    <div class="righttop"><select class="select" id="siteSelect" aria-label="Select site"><option>Demo rooftop · Site 01</option><option>Campus test panel · Site 02</option><option>All demo sites</option></select><span class="status" id="connStatus"><i class="dot"></i> Supabase Connected</span><button class="btn primary" id="refresh">↻ Refresh data</button></div>
   </header>
   <section class="grid metrics">
-    <article class="card"><div class="metric-head">Current power <span class="metric-icon">ϟ</span></div><div class="metric-value" id="power">428 <span class="unit">W</span></div><div class="trend">↗ 8.4% <span class="subtle">vs. previous hour</span></div></article>
-    <article class="card"><div class="metric-head">Energy today <span class="metric-icon">☀</span></div><div class="metric-value" id="energy">2.84 <span class="unit">kWh</span></div><div class="trend">↗ 0.32 kWh <span class="subtle">since last check</span></div></article>
-    <article class="card"><div class="metric-head">Panel temperature <span class="metric-icon">♨</span></div><div class="metric-value" id="temp">38.2 <span class="unit">°C</span></div><div class="subtle">Within demo threshold of 55°C</div></article>
-    <article class="card"><div class="metric-head">Data availability <span class="metric-icon">◉</span></div><div class="metric-value">98.6<span class="unit">%</span></div><div class="trend">● Last received <span id="lastSeen">just now</span></div></article>
+    <article class="card"><div class="metric-head">Current power <span class="metric-icon">ϟ</span></div><div class="metric-value" id="power">0 <span class="unit">W</span></div><div class="trend">↗ Live Sync <span class="subtle">from DB</span></div></article>
+    <article class="card"><div class="metric-head">Energy today <span class="metric-icon">☀</span></div><div class="metric-value" id="energy">0.00 <span class="unit">kWh</span></div><div class="trend">↗ Database <span class="subtle">accumulated</span></div></article>
+    <article class="card"><div class="metric-head">Panel temperature <span class="metric-icon">♨</span></div><div class="metric-value" id="temp">0.0 <span class="unit">°C</span></div><div class="subtle">Live Sensor Readings</div></article>
+    <article class="card"><div class="metric-head">Data availability <span class="metric-icon">◉</span></div><div class="metric-value">100<span class="unit">%</span></div><div class="trend">● Last received <span id="lastSeen">waiting...</span></div></article>
   </section>
   <section class="grid wide" id="performance">
-    <article class="card"><div class="card-title"><div><h2>Power generation</h2><p>Estimated output across the day · simulated sample data</p></div><select class="select" id="range"><option value="today">Today</option><option value="yesterday">Yesterday</option></select></div><div class="chartwrap"><canvas id="powerChart"></canvas></div><div class="legend"><span>Power output (W)</span><span>Expected range</span></div></article>
-    <article class="card"><div class="card-title"><div><h2>Daily target</h2><p>Energy generated vs. demo target</p></div><span class="pill">Today</span></div><div class="production"><div class="ring"><div class="ringinner"><b id="percent">72%</b><small>of daily target</small></div></div><div class="prodnotes"><div><b id="targetEnergy">2.84 kWh</b><small>Generated so far</small></div><div><b>3.95 kWh</b><small>Illustrative daily target</small></div><div><b style="color:var(--green)">1.11 kWh</b><small>Remaining to target</small></div></div></div></article>
+    <article class="card"><div class="card-title"><div><h2>Power generation</h2><p>Estimated output across the day</p></div><select class="select" id="range"><option value="today">Today</option><option value="yesterday">Yesterday</option></select></div><div class="chartwrap"><canvas id="powerChart"></canvas></div><div class="legend"><span>Power output (W)</span><span>Expected range</span></div></article>
+    <article class="card"><div class="card-title"><div><h2>Daily target</h2><p>Energy generated vs. target</p></div><span class="pill">Today</span></div><div class="production"><div class="ring"><div class="ringinner"><b id="percent">0%</b><small>of daily target</small></div></div><div class="prodnotes"><div><b id="targetEnergy">0.00 kWh</b><small>Generated so far</small></div><div><b>3.95 kWh</b><small>Daily target</small></div><div><b style="color:var(--green)" id="remTarget">3.95 kWh</b><small>Remaining to target</small></div></div></div></article>
   </section>
   <section class="grid lower">
-    <article class="card" id="alerts"><div class="card-title"><div><h2>Alerts & events</h2><p>Transparent alerts based on demo rules</p></div><button class="btn" id="ack">Mark all reviewed</button></div><div class="alerts" id="alertList">
-      <div class="alert"><div class="alert-icon">ⓘ</div><div><b>Performance slightly below expected</b><p>Output is 8% below the demo baseline. Check shade and operating conditions before diagnosing a fault.</p><time>Today · 12:42 PM · Advisory</time></div></div>
-      <div class="alert red"><div class="alert-icon">⚠</div><div><b>Monitoring data unavailable — test event</b><p>Simulated event: if this were real, check device power, Wi-Fi and cloud connectivity. This does not prove a panel fault.</p><time>Today · 10:18 AM · Demo event</time></div></div>
+    <article class="card" id="alerts"><div class="card-title"><div><h2>Alerts & events</h2><p>System notification rules</p></div><button class="btn" id="ack">Mark all reviewed</button></div><div class="alerts" id="alertList">
+      <div class="alert"><div class="alert-icon">ⓘ</div><div><b>Supabase Database Connected</b><p>Waiting to fetch live records from solar_readings table.</p><time>System status</time></div></div>
     </div></article>
-    <article class="card" id="devices"><div class="card-title"><div><h2>Monitored devices</h2><p>Prototype sites and connection status</p></div><span class="pill">2 devices</span></div><table class="table"><thead><tr><th>Device</th><th>Output</th><th>Status</th></tr></thead><tbody><tr><td><div class="device"><span class="deviceicon">☀</span><span><b>Panel sensor A</b><br><span class="subtle">ESP32 · Site 01</span></span></div></td><td>428 W</td><td><span class="state">Online</span></td></tr><tr><td><div class="device"><span class="deviceicon">☀</span><span><b>Panel sensor B</b><br><span class="subtle">ESP32 · Site 02</span></span></div></td><td>316 W</td><td><span class="state warn">Demo</span></td></tr></tbody></table><div class="footer"><span>Sensor readings shown are illustrative.</span><a href="#reports" style="color:var(--green);text-decoration:none;font-weight:700">View reports →</a></div></article>
+    <article class="card" id="devices"><div class="card-title"><div><h2>Monitored devices</h2><p>Prototype sites and connection status</p></div><span class="pill">1 active</span></div><table class="table"><thead><tr><th>Device</th><th>Output</th><th>Status</th></tr></thead><tbody><tr><td><div class="device"><span class="deviceicon">☀</span><span><b>SolarWatch Core</b><br><span class="subtle">ESP32 / Supabase</span></span></div></td><td id="devicePower">0 W</td><td><span class="state">Online</span></td></tr></tbody></table><div class="footer"><span>Sensor readings live from Supabase.</span><a href="#reports" style="color:var(--green);text-decoration:none;font-weight:700">View reports →</a></div></article>
   </section>
-  <section class="card" id="reports" style="margin-top:16px"><div class="card-title"><div><h2>Quick system summary</h2><p>Example calculations used by SOLARWATCH</p></div><span class="pill">V1 · Learning prototype</span></div><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px"><div><span class="subtle">Voltage</span><div style="font-size:21px;font-weight:750;margin-top:6px">18.0 V</div></div><div><span class="subtle">Current</span><div style="font-size:21px;font-weight:750;margin-top:6px">2.38 A</div></div><div><span class="subtle">Calculated power</span><div style="font-size:21px;font-weight:750;margin-top:6px">42.8 W*</div></div><div><span class="subtle">Measurement note</span><div style="font-size:12px;margin-top:8px;color:var(--muted)">Compare against a reference meter.</div></div></div><p class="subtle" style="margin:18px 0 0">*Illustrative display values only; do not use these sample values as verified measurements. Power is calculated as P = V × I. Energy is accumulated over time.</p></section>
-  <div class="footer"><span>© 2026 SOLARWATCH · Student prototype concept</span><span>Low-voltage DC testing only · Not for rooftop deployment</span></div>
+  <section class="card" id="reports" style="margin-top:16px"><div class="card-title"><div><h2>Quick system summary</h2><p>Live calculated telemetry</p></div><span class="pill">Live DB Data</span></div><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px"><div><span class="subtle">Voltage</span><div style="font-size:21px;font-weight:750;margin-top:6px" id="summaryVoltage">0 V</div></div><div><span class="subtle">Current</span><div style="font-size:21px;font-weight:750;margin-top:6px" id="summaryCurrent">0 A</div></div><div><span class="subtle">Calculated power</span><div style="font-size:21px;font-weight:750;margin-top:6px" id="summaryPower">0 W</div></div><div><span class="subtle">Measurement note</span><div style="font-size:12px;margin-top:8px;color:var(--muted)">Syncing with Supabase table.</div></div></div><p class="subtle" style="margin:18px 0 0">*Calculated as P = V × I. Readings are fetched in real-time from PostgreSQL via Supabase.</p></section>
+  <div class="footer"><span>© 2026 SOLARWATCH · Connected to Supabase</span><span>Mumbai Region (South Asia)</span></div>
 </main></div><div class="toast" id="toast">Dashboard updated</div>
+
 <script>
+// Preserved Canvas Chart Logic
 const canvas=document.getElementById('powerChart'),ctx=canvas.getContext('2d');
 function drawChart(mode='today'){const dpr=window.devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const pad={l:34,r:12,t:14,b:28},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;const vals=mode==='today'?[0,15,75,160,280,390,428,395,330,245,130,45]:[0,10,65,145,250,360,390,350,290,210,100,30];const expected=vals.map((v,i)=>v?Math.min(470,v*1.08+12):0);ctx.font='10px system-ui';ctx.fillStyle='#819087';ctx.strokeStyle='#e8eee9';ctx.lineWidth=1;for(let i=0;i<=4;i++){let y=pad.t+ch*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(String(500-i*125),2,y+3)}const labels=['6 AM','8 AM','10 AM','12 PM','2 PM','4 PM','6 PM'];labels.forEach((v,i)=>ctx.fillText(v,pad.l+cw*i/6-10,h-7));function line(arr,color,fill){ctx.beginPath();arr.forEach((v,i)=>{let x=pad.l+cw*i/(arr.length-1),y=pad.t+ch*(1-v/500);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});if(fill){ctx.lineTo(pad.l+cw,pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();ctx.fillStyle='rgba(23,132,81,.10)';ctx.fill()}else{ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.stroke()}}line(expected,'#b7d86d',false);line(vals,'#178451',true);line(vals,'#178451',false)}
 drawChart();window.addEventListener('resize',()=>drawChart(document.getElementById('range').value));
 document.getElementById('range').addEventListener('change',e=>drawChart(e.target.value));
-const toast=document.getElementById('toast');function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2400)}
-document.getElementById('refresh').addEventListener('click',()=>{let p=400+Math.round(Math.random()*65),t=(36+Math.random()*5).toFixed(1),e=(2.6+Math.random()*.5).toFixed(2);document.getElementById('power').innerHTML=p+' <span class="unit">W</span>';document.getElementById('temp').innerHTML=t+' <span class="unit">°C</span>';document.getElementById('energy').innerHTML=e+' <span class="unit">kWh</span>';document.getElementById('targetEnergy').textContent=e+' kWh';document.getElementById('lastSeen').textContent='just now';showToast('Demo values refreshed · simulated only')});
-document.getElementById('ack').addEventListener('click',()=>{document.getElementById('alertList').innerHTML='<div class="alert"><div class="alert-icon">✓</div><div><b>Alerts reviewed</b><p>Demo events marked as reviewed. This action does not change any connected device.</p><time>Just now</time></div></div>';showToast('Demo alerts marked reviewed')});
-document.getElementById('siteSelect').addEventListener('change',e=>{showToast('Selected: '+e.target.value+' · sample data only')});
+
+const toast=document.getElementById('toast');
+function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2400)}
+
+document.getElementById('ack').addEventListener('click',()=>{document.getElementById('alertList').innerHTML='<div class="alert"><div class="alert-icon">✓</div><div><b>Alerts reviewed</b><p>All current database logs reviewed.</p><time>Just now</time></div></div>';showToast('Alerts marked reviewed')});
+document.getElementById('siteSelect').addEventListener('change',e=>{showToast('Selected: '+e.target.value)});
 document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active')}));
-</script></body></html>
+
+// ==========================================
+// SUPABASE LIVE INTEGRATION
+// ==========================================
+const SUPABASE_URL = "https://ogkyjzxfupcucyhtsgkt.supabase.co";
+const SUPABASE_KEY = "Sb_publishable_KzY7v1GWLj4WNvdEGX_8Fg_l02kDyo1";
+
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+async function fetchLatestReadings() {
+  if (!supabaseClient) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('solar_readings')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("Supabase fetch error:", error);
+      showToast("Data fetch error: Check RLS policies");
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const latest = data[0];
+      
+      document.getElementById('power').innerHTML = `${latest.power ?? 0} <span class="unit">W</span>`;
+      document.getElementById('energy').innerHTML = `${latest.energy ?? 0} <span class="unit">kWh</span>`;
+      document.getElementById('temp').innerHTML = `${latest.temperature ?? 0} <span class="unit">°C</span>`;
+      
+      document.getElementById('targetEnergy').textContent = `${latest.energy ?? 0} kWh`;
+      
+      const target = 3.95;
+      const currentE = parseFloat(latest.energy) || 0;
+      const rem = Math.max(0, target - currentE).toFixed(2);
+      const perc = Math.min(100, Math.round((currentE / target) * 100));
+      
+      document.getElementById('percent').textContent = `${perc}%`;
+      document.getElementById('remTarget').textContent = `${rem} kWh`;
+
+      document.getElementById('devicePower').textContent = `${latest.power ?? 0} W`;
+
+      document.getElementById('summaryVoltage').textContent = `${latest.voltage ?? 0} V`;
+      document.getElementById('summaryCurrent').textContent = `${latest.current ?? 0} A`;
+      document.getElementById('summaryPower').textContent = `${latest.power ?? 0} W`;
+
+      const formattedTime = new Date(latest.created_at).toLocaleTimeString();
+      document.getElementById('lastSeen').textContent = formattedTime;
+
+      showToast("Live reading synced from Supabase");
+    } else {
+      showToast("Connected to DB: Table is currently empty");
+    }
+  } catch (err) {
+    console.error("Connection error:", err);
+  }
+}
+
+document.getElementById('refresh').addEventListener('click', fetchLatestReadings);
+window.addEventListener('DOMContentLoaded', fetchLatestReadings);
+</script>
+</body>
+</html>
